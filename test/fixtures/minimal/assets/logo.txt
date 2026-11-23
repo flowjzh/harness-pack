@@ -1,0 +1,1 @@
+demo asset copied verbatim to every target root

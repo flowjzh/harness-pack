@@ -1,0 +1,34 @@
+name: demo-bundle
+version: 0.0.0
+skills:
+  # Release views, produced by the build step below.
+  - skills/demo-skill/release/demo-skill
+agents:
+  - agents/demo.md
+include:
+  - assets
+build:
+  # Stands in for a repo-owned pack target (make -C ..., npm pack, ...):
+  # decides what ships and rewrites references to the built artifact.
+  - node scripts/pack.mjs
+targets:
+  claude-code:
+    preset: claude-code
+    manifest: templates/claude-plugin.json
+    mcp:
+      demo:
+        command: demo-mcp
+        args: [serve]
+  codex:
+    preset: codex
+    manifest: templates/codex-plugin.json
+    mcp:
+      demo:
+        command: demo-mcp
+  workbuddy:
+    preset: workbuddy
+    manifest: templates/workbuddy-plugin.json
+    mcp:
+      demo:
+        commandFromPlatform: demoCommandCandidates
+        args: [mcp]

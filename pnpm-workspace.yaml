@@ -1,0 +1,4 @@
+# pnpm settings (v11+ reads them from here, not package.json).
+# esbuild ships a native binary via a postinstall script; vitest needs it.
+allowBuilds:
+  esbuild: true

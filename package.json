@@ -1,0 +1,42 @@
+{
+  "name": "harness-pack",
+  "version": "0.1.0",
+  "description": "Pack one agent bundle (skills + agents + MCP wiring) into per-harness release artifacts: Claude Code plugin, Codex plugin, CodeBuddy-family expert package, and friends.",
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@11.17.0",
+  "bin": {
+    "harness-pack": "dist/cli.js"
+  },
+  "main": "dist/pipeline.js",
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "mcp",
+    "plugin",
+    "packer"
+  ],
+  "dependencies": {
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

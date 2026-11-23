@@ -1,0 +1,7 @@
+{
+  "name": "{{name}}",
+  "version": "{{version}}",
+  "displayName": { "en": "Demo", "zh": "演示" },
+  "agents": ["./agents/demo.md"],
+  "skills": ["./skills/demo-skill"]
+}
