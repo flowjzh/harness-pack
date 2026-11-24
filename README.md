@@ -2,6 +2,9 @@
 
 One agent bundle in, per-harness release artifacts out.
 
+**Status:** WorkBuddy is the only supported target today. The `claude-code` and
+`codex` presets are experimental and not part of the supported surface.
+
 A *bundle* is a source tree holding Agent Skills (`skills/<name>/SKILL.md` plus
 whatever files they reference), agent persona files, and an MCP wiring
 declaration. `harness-pack` runs the bundle's repo-owned build steps, copies
@@ -18,18 +21,21 @@ only performs the harness-specific mechanics (envelope layout, manifest
 placement, MCP declaration, release hashing).
 
 ```sh
-harness-pack build --config pack.yaml --version 1.2.3
-harness-pack lint  --config pack.yaml
+npx harness-pack@0.2.0 build --config pack.yaml --version 1.2.3
+npx harness-pack@0.2.0 lint  --config pack.yaml
 ```
+
+Pin the exact version in build scripts (as above) so a release can be
+reproduced; a floating tag would let the packer change under a fixed bundle.
 
 Targets are selected by preset; each target in the config picks one and
 supplies its own manifest template:
 
-| preset | artifact layout | MCP declaration |
-|---|---|---|
-| `claude-code` | `.claude-plugin/plugin.json`, `skills/`, `agents/` | `.mcp.json`, `{{root}}` = `${CLAUDE_PLUGIN_ROOT}` |
-| `codex` | `plugin.json` (Agent Plugins 1.0), `skills/`, `agents/` | `mcp.json` (`$schema`, `type: stdio`, `cwd: "./"`), `{{root}}` = `.` |
-| `workbuddy` | `.codebuddy-plugin/plugin.json`, `skills/`, `agents/` | root `.mcp.json`, `{{root}}` = `.`; the manifest points at it via `dependencies.mcpServers: "./.mcp.json"` (the open-platform documented form; keep that line in the template) |
+| preset | status | artifact layout | MCP declaration |
+|---|---|---|---|
+| `workbuddy` | supported | `.codebuddy-plugin/plugin.json`, `skills/`, `agents/` | root `.mcp.json`, `{{root}}` = `.`; the manifest points at it via `dependencies.mcpServers: "./.mcp.json"` (the open-platform documented form; keep that line in the template) |
+| `claude-code` | experimental | `.claude-plugin/plugin.json`, `skills/`, `agents/` | `.mcp.json`, `{{root}}` = `${CLAUDE_PLUGIN_ROOT}` |
+| `codex` | experimental | `plugin.json` (Agent Plugins 1.0), `skills/`, `agents/` | `mcp.json` (`$schema`, `type: stdio`, `cwd: "./"`), `{{root}}` = `.` |
 
 ## Config
 
@@ -56,22 +62,22 @@ mcp:                      # stdio servers shipped with every target
 display:                  # person layer, rendered via {{display.*}} tokens
   displayName: {en: My Agent, zh: 我的助手}
   profession: {en: Automation Specialist, zh: 自动化专家}
-  displayDescription: {en: ..., zh: ...}   # zh: 40-50 chars (WorkBuddy rule)
+  displayDescription: {en: ..., zh: ...}      # zh: 40-50 hanzi (WorkBuddy rule)
   avatar: avatars/expert.png
   tags: [{en: ..., zh: ...}, {en: ..., zh: ...}, {en: ..., zh: ...}]
   quickPrompts: [{en: ..., zh: ...}, {en: ..., zh: ...}, {en: ..., zh: ...}]
-  defaultInitPrompt: {en: ..., zh: ...}    # must equal quickPrompts[0]
+  defaultInitPrompt: {en: ..., zh: ...}       # must equal quickPrompts[0]
 targets:
   claude:
     preset: claude-code
-    manifest: templates/claude-plugin.json   # {{name}} / {{version}} tokens
-    mcp:                  # optional per-target servers, merged by name
+    manifest: templates/claude-plugin.json    # {{name}} / {{version}} tokens
+    mcp:                   # optional per-target servers, merged by name
       extra: { command: extra-mcp }
   workbuddy:
     preset: workbuddy
     manifest: templates/workbuddy-plugin.json
-    display:              # optional whole-key overrides over the layer above
-      avatar: avatars/expert-wb.png          # e.g. the market wants PNG
+    display:               # optional whole-key overrides over the layer above
+      avatar: avatars/expert-wb.png           # e.g. the market wants PNG
 ```
 
 - **build** — a plain command list run in the bundle root before assembly.
@@ -80,7 +86,7 @@ targets:
   the build.
 - **mcp** — stdio servers declared once for all targets. `{{root}}` in any
   string of a server definition is rendered by the preset into that harness's plugin-root
-  reference (Claude Code's `${CLAUDE_PLUGIN_ROOT}`, WorkBuddy's `.`, Codex's
+  reference (WorkBuddy's `.`, Claude Code's `${CLAUDE_PLUGIN_ROOT}`, Codex's
   `.` with `cwd: "./"`), so the artifact carries no machine-specific path and
   consumers copy it verbatim. WorkBuddy's expert service resolves `./` args
   against the installed plugin dir; that is the channel the published expert
@@ -117,8 +123,16 @@ targets:
   when given, else the `skills` release views; `make lint` therefore works
   before any build toolchain is installed.
 
-See [docs/design.md](docs/design.md) (Chinese) for the rationale, layering and
-the release contract.
+See [docs/design.md](docs/design.md) for the rationale, layering and the
+release contract.
+
+## Development
+
+```sh
+pnpm install
+pnpm build      # tsc -> dist/
+pnpm test
+```
 
 ## License
 

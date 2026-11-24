@@ -153,7 +153,7 @@ export function lintPackageTree(outDir: string, preset: Preset): ManifestIssue[]
       if (!inTree) dirPrefix = '';
       const line = lines[i]
         .replace(/https?:\/\/\S+/g, '') // URLs are not file references
-        .replace(/<[^<>]*>\//g, ''); // <本技能绝对路径>/-style placeholders
+        .replace(/<[^<>]*>\//g, ''); // <skill-abs-path>/-style placeholders
       for (const m of line.matchAll(ASSET_REF)) {
         const target = path.resolve(base, inTree ? dirPrefix + m[1] : m[1]);
         if (!existsSync(target)) {

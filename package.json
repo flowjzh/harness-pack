@@ -2,6 +2,14 @@
   "name": "harness-pack",
   "version": "0.2.0",
   "description": "Pack one agent bundle (skills + agents + MCP wiring) into per-harness release artifacts: Claude Code plugin, Codex plugin, CodeBuddy-family expert package, and friends.",
+  "homepage": "https://github.com/flowjzh/harness-pack#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flowjzh/harness-pack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/flowjzh/harness-pack/issues"
+  },
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@11.17.0",
@@ -21,7 +29,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
   },
   "keywords": [
     "agent-skills",
