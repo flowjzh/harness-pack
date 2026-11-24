@@ -12,6 +12,10 @@
   },
   "type": "module",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "packageManager": "pnpm@11.17.0",
   "bin": {
     "harness-pack": "dist/cli.js"
