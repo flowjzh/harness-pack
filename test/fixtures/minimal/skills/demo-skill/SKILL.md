@@ -5,4 +5,4 @@ description: A minimal skill used by harness-pack tests. Install plugins/demo.rh
 
 # demo-skill
 
-Run `scripts/run.sh` to do the thing.
+Install `plugins/demo.rhai`, then call the goblin CLI with the trick name.

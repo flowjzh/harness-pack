@@ -1,6 +1,6 @@
 {
   "name": "harness-pack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pack one agent bundle (skills + agents + MCP wiring) into per-harness release artifacts: Claude Code plugin, Codex plugin, CodeBuddy-family expert package, and friends.",
   "type": "module",
   "license": "MIT",

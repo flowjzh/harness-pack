@@ -27,9 +27,9 @@ supplies its own manifest template:
 
 | preset | artifact layout | MCP declaration |
 |---|---|---|
-| `claude-code` | `.claude-plugin/plugin.json`, `skills/`, `agents/` | `.mcp.json` at the artifact root |
-| `codex` | `plugin.json` (Agent Plugins 1.0), `skills/`, `agents/` | `mcp.json` at the artifact root |
-| `workbuddy` | `.codebuddy-plugin/plugin.json`, `skills/`, `agents/` | embedded as `mcpServers` in the manifest |
+| `claude-code` | `.claude-plugin/plugin.json`, `skills/`, `agents/` | `.mcp.json`, `{{root}}` = `${CLAUDE_PLUGIN_ROOT}` |
+| `codex` | `plugin.json` (Agent Plugins 1.0), `skills/`, `agents/` | `mcp.json` (`$schema`, `type: stdio`, `cwd: "./"`), `{{root}}` = `.` |
+| `workbuddy` | `.codebuddy-plugin/plugin.json`, `skills/`, `agents/` | root `.mcp.json`, `{{root}}` = `.`; the manifest points at it via `dependencies.mcpServers: "./.mcp.json"` (the open-platform documented form; keep that line in the template) |
 
 ## Config
 
@@ -46,18 +46,70 @@ include:                  # optional root entries copied verbatim
   - avatars
 build:                    # optional commands, run in the bundle root first
   - 'make -C skills/my-skill pack'
+mcp:                      # stdio servers shipped with every target
+  myserver:
+    command: node
+    args: ['{{root}}/bin/mcp.mjs']
+    displayName: {en: My Tool, zh: 我的工具}   # connector-card metadata:
+    description: {en: ..., zh: ...}           # rendered into x-workbuddy by
+    icon: ./avatars/my-tool.svg               # workbuddy, stripped elsewhere
+display:                  # person layer, rendered via {{display.*}} tokens
+  displayName: {en: My Agent, zh: 我的助手}
+  profession: {en: Automation Specialist, zh: 自动化专家}
+  displayDescription: {en: ..., zh: ...}   # zh: 40-50 chars (WorkBuddy rule)
+  avatar: avatars/expert.png
+  tags: [{en: ..., zh: ...}, {en: ..., zh: ...}, {en: ..., zh: ...}]
+  quickPrompts: [{en: ..., zh: ...}, {en: ..., zh: ...}, {en: ..., zh: ...}]
+  defaultInitPrompt: {en: ..., zh: ...}    # must equal quickPrompts[0]
 targets:
   claude:
     preset: claude-code
     manifest: templates/claude-plugin.json   # {{name}} / {{version}} tokens
-    mcp:
-      myserver: { command: my-mcp, args: [serve] }
+    mcp:                  # optional per-target servers, merged by name
+      extra: { command: extra-mcp }
+  workbuddy:
+    preset: workbuddy
+    manifest: templates/workbuddy-plugin.json
+    display:              # optional whole-key overrides over the layer above
+      avatar: avatars/expert-wb.png          # e.g. the market wants PNG
 ```
 
 - **build** — a plain command list run in the bundle root before assembly.
   Packaging belongs to the repos that own the content (`make -C skills/x pack`,
   `npm pack`, ...); harness-pack only runs the commands. A non-zero exit aborts
   the build.
+- **mcp** — stdio servers declared once for all targets. `{{root}}` in any
+  string of a server definition is rendered by the preset into that harness's plugin-root
+  reference (Claude Code's `${CLAUDE_PLUGIN_ROOT}`, WorkBuddy's `.`, Codex's
+  `.` with `cwd: "./"`), so the artifact carries no machine-specific path and
+  consumers copy it verbatim. WorkBuddy's expert service resolves `./` args
+  against the installed plugin dir; that is the channel the published expert
+  package uses.
+  `targets.<name>.mcp` merges by server name over the bundle-level map.
+  Per-server presentation keys (`displayName` / `description` / `icon` /
+  `auth`) are canonical: presets with a metadata envelope render them into it
+  (workbuddy → `x-workbuddy`, the connector-card copy; the app strips the
+  envelope before writing the user's connector config), presets without one
+  strip them from the artifact.
+- **display** — the person layer above the canonical schema. Platforms that
+  present a bundle as a person (WorkBuddy experts: humanized avatar, name,
+  profession) render these keys via `{{display.*}}` tokens (dotted paths
+  work, e.g. `{{display.displayName.en}}`) — persona output comes from these
+  keys, never from `name`, which stays the tool id. A token that exactly
+  fills a JSON string splices any JSON value; embedded in longer text it must
+  resolve to a string; an unresolvable key fails the build.
+  `targets.<name>.display` overrides keys wholesale (platform media formats).
+- **manifest lint** — per-preset platform rules run on every build against
+  the rendered manifests (`src/manifest-lint.ts`), so the official-market
+  requirements are encoded once instead of re-checked by each bundle:
+  structural problems fail the build (missing listing fields, `plugin != name`,
+  `defaultInitPrompt != quickPrompts[0]`, tags/quickPrompts count, agentName
+  not matching an `agents/` stem, avatar file missing); market-copy policy
+  warns on stderr (zh word count, avatar format/size, `author.email`). One
+  universal check runs for every preset: reference integrity of the shipped
+  tree — a `SKILL.md` or agent doc referencing a file the package does not
+  contain fails the build (the market's "missing file" rejection, caught
+  before submission).
 - **lint** — checks `SKILL.md` against the portable subset of the
   [Agent Skills spec](https://agentskills.io/specification): frontmatter
   `name`/`description` present, `name` matches the directory and is

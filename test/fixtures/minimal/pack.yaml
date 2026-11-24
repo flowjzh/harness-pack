@@ -7,28 +7,52 @@ agents:
   - agents/demo.md
 include:
   - assets
+  - avatars
+display:
+  # The person layer: persona platforms render these via {{display.*}} tokens.
+  # `name` stays the tool id and is never used as a display fallback.
+  displayName: {en: Demo, zh: 演示}
+  profession: {en: Demo Specialist, zh: 演示专家}
+  displayDescription:
+    en: A demo bundle persona description long enough for a market listing.
+    zh: 这是一个用于验证打包器的演示专家人设描述，用于确认市场展示字段的中文长度落在要求的四十到五十字区间之内。
+  avatar: avatars/expert.png
+  tags:
+    - {en: Demo, zh: 演示}
+    - {en: Test, zh: 测试}
+    - {en: Fixture, zh: 样例}
+  quickPrompts:
+    - {en: Run the demo, zh: 运行演示}
+    - {en: Show the skills, zh: 展示技能}
+    - {en: Explain the bundle, zh: 解释这个包}
+  defaultInitPrompt: {en: Run the demo, zh: 运行演示}
 build:
   # Stands in for a repo-owned pack target (make -C ..., npm pack, ...):
   # decides what ships and rewrites references to the built artifact.
   - node scripts/pack.mjs
+mcp:
+  # Stated once; each preset renders {{root}} as its harness's plugin root.
+  demo:
+    command: node
+    args: ['{{root}}/bin/demo-mcp.mjs']
+    env:
+      DEMO_HOME: '{{root}}'
+    # Presentation metadata: presets with an envelope render it (workbuddy ->
+    # x-workbuddy), others strip it.
+    displayName: {en: Demo Tool, zh: 演示工具}
+    description: {en: Demo MCP server, zh: 演示 MCP 服务}
+    icon: ./avatars/expert.png
 targets:
   claude-code:
     preset: claude-code
     manifest: templates/claude-plugin.json
-    mcp:
-      demo:
-        command: demo-mcp
-        args: [serve]
   codex:
     preset: codex
     manifest: templates/codex-plugin.json
-    mcp:
-      demo:
-        command: demo-mcp
   workbuddy:
     preset: workbuddy
     manifest: templates/workbuddy-plugin.json
     mcp:
-      demo:
-        commandFromPlatform: demoCommandCandidates
-        args: [mcp]
+      # Per-target servers merge over the bundle-level ones by name.
+      extra:
+        command: extra-mcp

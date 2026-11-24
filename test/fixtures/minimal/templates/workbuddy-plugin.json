@@ -1,7 +1,20 @@
 {
   "name": "{{name}}",
   "version": "{{version}}",
-  "displayName": { "en": "Demo", "zh": "演示" },
+  "description": "Demo bundle for harness-pack tests",
+  "author": { "name": "Demo", "email": "demo@example.com" },
   "agents": ["./agents/demo.md"],
-  "skills": ["./skills/demo-skill"]
+  "skills": ["./skills/demo-skill"],
+  "expertType": "agent",
+  "agentName": "demo",
+  "displayName": "{{display.displayName}}",
+  "profession": "{{display.profession}}",
+  "displayDescription": "{{display.displayDescription}}",
+  "avatar": "{{display.avatar}}",
+  "categoryId": "02-Engineering",
+  "defaultInitPrompt": "{{display.defaultInitPrompt}}",
+  "plugin": "{{name}}",
+  "dependencies": { "mcpServers": "./.mcp.json" },
+  "tags": "{{display.tags}}",
+  "quickPrompts": "{{display.quickPrompts}}"
 }
