@@ -7,14 +7,10 @@
     "type": "git",
     "url": "git+https://github.com/flowjzh/harness-pack.git"
   },
-  "bugs": {
-    "url": "https://github.com/flowjzh/harness-pack/issues"
-  },
   "type": "module",
   "license": "MIT",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "registry": "https://registry.npmjs.org/"
   },
   "packageManager": "pnpm@11.17.0",
   "bin": {
@@ -34,7 +30,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run typecheck && npm test"
   },
   "keywords": [
     "agent-skills",

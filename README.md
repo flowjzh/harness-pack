@@ -31,11 +31,11 @@ reproduced; a floating tag would let the packer change under a fixed bundle.
 Targets are selected by preset; each target in the config picks one and
 supplies its own manifest template:
 
-| preset | status | artifact layout | MCP declaration |
-|---|---|---|---|
-| `workbuddy` | supported | `.codebuddy-plugin/plugin.json`, `skills/`, `agents/` | root `.mcp.json`, `{{root}}` = `.`; the manifest points at it via `dependencies.mcpServers: "./.mcp.json"` (the open-platform documented form; keep that line in the template) |
-| `claude-code` | experimental | `.claude-plugin/plugin.json`, `skills/`, `agents/` | `.mcp.json`, `{{root}}` = `${CLAUDE_PLUGIN_ROOT}` |
-| `codex` | experimental | `plugin.json` (Agent Plugins 1.0), `skills/`, `agents/` | `mcp.json` (`$schema`, `type: stdio`, `cwd: "./"`), `{{root}}` = `.` |
+| preset | artifact layout | MCP declaration |
+|---|---|---|
+| `workbuddy` | `.codebuddy-plugin/plugin.json`, `skills/`, `agents/` | root `.mcp.json`, `{{root}}` = `.`; the manifest points at it via `dependencies.mcpServers: "./.mcp.json"` (the open-platform documented form; keep that line in the template) |
+| `claude-code` | `.claude-plugin/plugin.json`, `skills/`, `agents/` | `.mcp.json`, `{{root}}` = `${CLAUDE_PLUGIN_ROOT}` |
+| `codex` | `plugin.json` (Agent Plugins 1.0), `skills/`, `agents/` | `mcp.json` (`$schema`, `type: stdio`, `cwd: "./"`), `{{root}}` = `.` |
 
 ## Config
 
@@ -130,8 +130,8 @@ release contract.
 
 ```sh
 pnpm install
-pnpm build      # tsc -> dist/
 pnpm test
+pnpm build      # tsc -> dist/
 ```
 
 ## License

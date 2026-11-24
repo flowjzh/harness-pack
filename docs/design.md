@@ -119,9 +119,6 @@ toolchain when `lint` points at source directories.
 | `claude-code` | `.claude-plugin/plugin.json` | `skills/` | `agents/` | `.mcp.json` (`{mcpServers: ...}`, `{{root}}` = `${CLAUDE_PLUGIN_ROOT}`) |
 | `codex` | `plugin.json` (root, Agent Plugins 1.0 portable core) | `skills/` | `agents/` | `mcp.json` (`$schema` + `{mcpServers: ...}`, `{{root}}` = `.`) |
 
-Only the WorkBuddy preset is supported today; the `claude-code` and `codex`
-presets are experimental.
-
 - The `codex` artifact can also serve as a cross-harness portable core: Codex
   also reads Claude-format marketplaces. Codex does not expand
   `${PLUGIN_ROOT}` in MCP configs, so the preset adds `type: stdio` to every
@@ -143,7 +140,7 @@ presets are experimental.
 
 ```json
 {
-  "generator": "harness-pack/0.1.0",
+  "generator": "harness-pack/0.2.0",
   "name": "my-bundle",
   "version": "1.2.3",
   "generatedAt": "2026-11-23T00:00:00.000Z",
@@ -163,8 +160,8 @@ A business repo (such as `goblin-helper`) in a tag pipeline:
 
 ```
 git submodule update --init
-harness-pack build --config pack.yaml --version "$CI_COMMIT_TAG"
-# build runs each skill repo's pack target → collects release views → applies envelopes
+npx harness-pack@0.2.0 build --config pack.yaml --version "$CI_COMMIT_TAG"
+# collects the release views produced by the bundle's build steps → applies envelopes
 # → dist/workbuddy/, dist/claude-code/, dist/codex/, dist/release.json
 ```
 
