@@ -37,7 +37,7 @@ What it does not do (boundaries):
 |---|---|---|
 | Content shape | Skill repo | `make pack` produces `release/<name>/`: pruning, packaging, reference rewriting |
 | Composition and metadata | Bundle repo | Which skills to ship, target list, manifest templates, persona values (`display`), version |
-| Harness mechanics | harness-pack | Preset layout, manifest placement, MCP wiring, `release.json` |
+| Harness mechanics | harness-pack | Preset layout, manifest placement, MCP wiring, `release.json`, dev deployment |
 
 The test is "who owns this knowledge": a new plugin variant should only touch
 that skill repo; a new target harness should only touch the packer's preset
@@ -76,7 +76,7 @@ corresponds to a commit/tag and is reproducible by construction.
 | `lint[]` | Optional: source skill directories to validate; defaults to the `skills` views |
 | `agents[]` | Persona files or directories, copied to `<preset agents dir>/<basename>` |
 | `include[]` | Other root entries (files or directories) copied verbatim into every target root |
-| `build[]` | Commands run in order in the bundle root; any non-zero exit fails the build |
+| `build[]` | Commands run in order in the bundle root; any non-zero exit fails the build. `install-dev` sets `HARNESS_PACK_DEV=1` so view scripts may assemble from working trees; releases never do |
 | `mcp{}` | stdio servers shared by all targets; `{{root}}` in any server string is rendered by the preset into that harness's plugin-root reference; `displayName`/`description`/`icon`/`auth` are canonical connector-card metadata, rendered into the envelope if the preset has one (workbuddy → `x-workbuddy`) and stripped otherwise |
 | `display{}` | Persona layer: persona platforms (which present the bundle as a person) render these keys via `{{display.*}}`; `name` is always the tool id (install directory, pin name, plugin/agentName) and is never a display fallback |
 | `targets{}` | Target name → `{preset, manifest, mcp?, display?, outDir?}`; `mcp` merges over the bundle-level declarations by server name; `display` overrides the persona layer **whole-key** (platform media differences, such as a market that only accepts PNG avatars: the key swaps files, it is not a deep merge) |
@@ -110,6 +110,18 @@ collect → apply envelope → release.json. Build runs first because the shippi
 target is the release view, and spec validation should target the tree that
 actually ships; `make lint` (which only runs the lint command) needs no build
 toolchain when `lint` points at source directories.
+
+**Dev deployment** (`install-dev`): a preset answers a fourth harness
+question — how a freshly built artifact runs on this machine. Copy-based
+harnesses (WorkBuddy's `my-experts` marketplace: replace the plugin dir, upsert
+the marketplace entry, drop the app's plugin cache) get a real deploy; in-place
+loaders (Claude Code `--plugin-dir`) get the load command; cache-copy loaders
+without in-place loading (Codex) get their documented loop. The dev package is
+built through the same pipeline and gates as a release — the only difference
+is `HARNESS_PACK_DEV=1` on the build steps, which lets content repos switch
+their view sourcing to working trees. Dev copies coexist with an installed
+market package of the same name (separate marketplaces, per-session summon
+decides); deleting the dev copy falls back to the market.
 
 ## 5. Presets
 
@@ -176,7 +188,8 @@ layout and are decoupled from the packer.
 
 - Node >= 20, ESM, TypeScript; the only runtime dependency is `yaml`.
 - Presets are **data** (`src/presets.ts`): adding a harness means one preset
-  entry plus a template, with no pipeline changes.
+  entry plus a template plus a dev installer in `src/dev-install.ts`, with no
+  pipeline changes.
 - Not built yet, add on demand: zip/tar artifact packaging (currently emits
   directories; compression is left to CI), `marketplace.json` generation,
   official schema validation and `claude plugin validate` integration, and

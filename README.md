@@ -23,8 +23,9 @@ only performs the harness-specific mechanics (envelope layout, manifest
 placement, MCP declaration, release hashing).
 
 ```sh
-npx harness-pack@0.2.0 build --config pack.yaml --version 1.2.3
-npx harness-pack@0.2.0 lint  --config pack.yaml
+npx harness-pack@0.2.0 build       --config pack.yaml --version 1.2.3
+npx harness-pack@0.2.0 install-dev --config pack.yaml --target workbuddy
+npx harness-pack@0.2.0 lint        --config pack.yaml
 ```
 
 Pin the exact version in build scripts (as above) so a release can be
@@ -118,6 +119,22 @@ targets:
   tree — a `SKILL.md` or agent doc referencing a file the package does not
   contain fails the build (the market's "missing file" rejection, caught
   before submission).
+- **install-dev** — build (same gates as a release), then deploy each target
+  to that harness's development location on this machine, for the
+  edit-summon-verify loop. What "deploy" means is preset mechanics:
+
+  | preset | behavior |
+  |---|---|
+  | `workbuddy` | install into the local `my-experts` marketplace (`WORKBUDDY_HOME` or `~/.workbuddy`): replace `plugins/my-experts/plugins/<name>/`, upsert the marketplace entry, drop the app's plugin cache, patch `avatarUrl` onto the installed manifest; summon it straight from the expert picker (the app rescans the marketplace on demand) |
+  | `claude-code` | load in place — print `claude --plugin-dir <dist dir>`; edits are picked up by `/reload-plugins`, nothing to install |
+  | `codex` | print the documented loop (cache-copy install via a local marketplace; skills iterate in place via `~/.agents/skills`) |
+
+  Build steps run with `HARNESS_PACK_DEV=1`, so repo-owned view scripts may
+  assemble from working trees (uncommitted edits included) instead of
+  committed archives — pruning and packaging stay exactly as a release.
+  Deployed dev copies are normal marketplace entries: the market copy of the
+  same-named expert stays installed, and per session the summoned one wins
+  (local resolution prefers `my-experts`); delete the dev copy to fall back.
 - **lint** — checks `SKILL.md` against the portable subset of the
   [Agent Skills spec](https://agentskills.io/specification): frontmatter
   `name`/`description` present, `name` matches the directory and is

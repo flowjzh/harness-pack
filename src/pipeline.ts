@@ -5,7 +5,7 @@ import path from 'node:path';
 import type { BuildOptions, LintIssue, McpServer, PackConfig, ReleaseManifest, TargetConfig } from './types.js';
 import { loadConfig, resolveConfig, isRecord, type ResolvedConfig } from './config.js';
 import { lintManifest, lintPackageTree } from './manifest-lint.js';
-import { PRESETS, type Preset } from './presets.js';
+import { PRESETS, type Preset, type PresetName } from './presets.js';
 import { lintSkills } from './lint.js';
 
 const PKG_VERSION = (JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }).version;
@@ -54,11 +54,15 @@ const lintDirs = (root: string, cfg: PackConfig) => (cfg.lint ?? cfg.skills).map
 
 // Build steps belong to the repos that own the content; run them in the
 // bundle root so relative paths in the commands (make -C skills/x ...) work.
-function runBuildSteps(root: string, steps: string[]): void {
+// install-dev sets HARNESS_PACK_DEV=1: view scripts may then assemble from
+// working trees instead of committed archives (what ships for a release
+// never changes).
+function runBuildSteps(root: string, steps: string[], dev = false): void {
+  const env = dev ? { ...process.env, HARNESS_PACK_DEV: '1' } : undefined;
   for (const step of steps) {
     // Inherit both streams: build output (including per-source warnings such
     // as a skipped broken plugin) belongs in the caller's log as it happens.
-    const res = spawnSync(step, { shell: true, cwd: root, stdio: ['ignore', 'inherit', 'inherit'] });
+    const res = spawnSync(step, { shell: true, cwd: root, stdio: ['ignore', 'inherit', 'inherit'], env });
     if (res.status !== 0) {
       throw new Error(`build step failed (exit ${res.status ?? '?'}): ${step}`);
     }
@@ -195,7 +199,7 @@ function hashTree(dir: string): Record<string, { sha256: string; bytes: number }
 export interface BuildResult {
   version: string;
   releasePath: string;
-  targets: { key: string; outDir: string; fileCount: number }[];
+  targets: { key: string; outDir: string; fileCount: number; preset: PresetName }[];
 }
 
 export function runBuild(opts: BuildOptions): BuildResult {
@@ -205,7 +209,7 @@ export function runBuild(opts: BuildOptions): BuildResult {
   // Build first: what ships is the release views, so the spec check runs on
   // the tree that will actually be assembled (or on `lint` sources when the
   // config points there).
-  if (cfg.build) runBuildSteps(root, cfg.build);
+  if (cfg.build) runBuildSteps(root, cfg.build, opts.dev ?? false);
 
   const errors = lintSkills(lintDirs(root, cfg)).filter((i) => i.severity === 'error');
   if (errors.length > 0) {
@@ -218,8 +222,11 @@ export function runBuild(opts: BuildOptions): BuildResult {
   const targets = Object.entries(cfg.targets).map(([key, target]) => {
     const { outDir, issues } = emitTarget(root, entries, key, target, distRoot, cfg);
     manifestIssues.push(...issues);
-    const files = hashTree(outDir);
-    return { key, outDir, fileCount: Object.keys(files).length, files };
+    // Dev skips release hashing and the release manifest: install-dev never
+    // reads either and reruns on every edit-summon-verify cycle. The gates
+    // (skill lint + manifest lint) above are unaffected.
+    const files = opts.dev ? undefined : hashTree(outDir);
+    return { key, outDir, fileCount: files ? Object.keys(files).length : walk(outDir).length, preset: target.preset, files };
   });
   // Platform listing rules run on the rendered manifests; warnings surface on
   // stderr, errors abort before release.json is written.
@@ -230,19 +237,21 @@ export function runBuild(opts: BuildOptions): BuildResult {
   if (manifestErrors.length > 0) {
     throw new Error(`manifest errors - fix them before building:\n${manifestErrors.map((i) => `  ${i.skill}: ${i.message}`).join('\n')}`);
   }
-  const release: ReleaseManifest = {
-    generator: `harness-pack/${PKG_VERSION}`,
-    name: cfg.name,
-    version: cfg.version,
-    generatedAt: new Date().toISOString(),
-    targets: Object.fromEntries(targets.map((t) => [t.key, { files: t.files }])),
-  };
   const releasePath = path.join(distRoot, 'release.json');
-  writeFileSync(releasePath, `${JSON.stringify(release, null, 2)}\n`);
+  if (!opts.dev) {
+    const release: ReleaseManifest = {
+      generator: `harness-pack/${PKG_VERSION}`,
+      name: cfg.name,
+      version: cfg.version,
+      generatedAt: new Date().toISOString(),
+      targets: Object.fromEntries(targets.map((t) => [t.key, { files: t.files! }])),
+    };
+    writeFileSync(releasePath, `${JSON.stringify(release, null, 2)}\n`);
+  }
   return {
     version: cfg.version,
     releasePath,
-    targets: targets.map(({ key, outDir, fileCount }) => ({ key, outDir, fileCount })),
+    targets: targets.map(({ key, outDir, fileCount, preset }) => ({ key, outDir, fileCount, preset })),
   };
 }
 

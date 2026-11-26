@@ -1,27 +1,8 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { runBuild } from '../src/pipeline.js';
-import type { BuildOptions } from '../src/types.js';
-
-const fixtureRoot = path.join(import.meta.dirname, 'fixtures', 'minimal');
-
-function tempDir() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'hp-'));
-  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
-  return dir;
-}
-
-// Build steps write into the source tree by contract, so every test runs on
-// its own copy instead of mutating the fixture. The optional mutate hook
-// patches the copy before the build runs.
-function build(extra: Partial<BuildOptions> = {}, mutate?: (root: string) => void) {
-  const root = tempDir();
-  cpSync(fixtureRoot, root, { recursive: true });
-  mutate?.(root);
-  return runBuild({ configPath: path.join(root, 'pack.yaml'), outDir: path.join(root, 'dist'), ...extra });
-}
+import { build, tempDir } from './helpers.js';
 
 describe('build', () => {
   it('emits all three presets with built artifacts and rewrites', () => {

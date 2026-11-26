@@ -98,6 +98,9 @@ export interface BuildOptions {
   targets?: string[];
   version?: string;
   outDir?: string;
+  // install-dev only: run build steps with HARNESS_PACK_DEV=1 so their view
+  // scripts may assemble from working trees instead of committed archives.
+  dev?: boolean;
 }
 
 export interface LintIssue {

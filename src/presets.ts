@@ -1,7 +1,8 @@
-// Per-harness layout conventions. A preset answers exactly three questions:
-// where the manifest lands, where skills and agents go, and how the MCP
-// declaration is placed. Everything else about a target's content comes from
-// the bundle's own templates and config.
+// Per-harness layout conventions. A preset answers four questions: where the
+// manifest lands, where skills and agents go, how the MCP declaration is
+// placed, and how a built artifact runs on this machine for development (the
+// installers live in src/dev-install.ts, keyed by preset). Everything else
+// about a target's content comes from the bundle's own templates and config.
 
 export type PresetName = 'claude-code' | 'codex' | 'workbuddy';
 

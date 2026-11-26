@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import { runBuild, runLint } from './pipeline.js';
+import { devInstall } from './dev-install.js';
 import { ConfigError } from './config.js';
 import type { BuildOptions } from './types.js';
 
 const USAGE = `harness-pack — pack one agent bundle into per-harness artifacts
 
 Usage:
-  harness-pack build [--config <pack.yaml>] [--target <name>]... [--version <v>]
-                     [--out <dir>]
-  harness-pack lint  [--config <pack.yaml>]
+  harness-pack build       [--config <pack.yaml>] [--target <name>]... [--version <v>]
+                           [--out <dir>]
+  harness-pack install-dev [--config <pack.yaml>] [--target <name>]... [--version <v>]
+  harness-pack lint        [--config <pack.yaml>]
 
 Defaults: --config pack.yaml, --out <config-dir>/dist. --version overrides the
-config's version. --target narrows the build (repeatable).`;
+config's version. --target narrows the build (repeatable). install-dev builds
+like a release, then deploys each target to that harness's development
+location on this machine (see the README's install-dev section).`;
 
 interface Args extends BuildOptions {
   command?: string;
@@ -48,13 +52,22 @@ function main(): number {
     return args.command ? 0 : 1;
   }
   try {
-    if (args.command === 'build') {
+    if (args.command === 'build' || args.command === 'install-dev') {
       const { command: _command, ...opts } = args;
-      const result = runBuild({ ...opts, configPath: path.resolve(args.configPath), targets: args.targets.length ? args.targets : undefined });
-      for (const t of result.targets) {
-        console.log(`built ${t.key}: ${path.relative(process.cwd(), t.outDir)} (${t.fileCount} files)`);
+      const result = runBuild({
+        ...opts,
+        dev: args.command === 'install-dev',
+        configPath: path.resolve(args.configPath),
+        targets: args.targets.length ? args.targets : undefined,
+      });
+      if (args.command === 'install-dev') {
+        for (const t of result.targets) console.log(devInstall(t));
+      } else {
+        for (const t of result.targets) {
+          console.log(`built ${t.key}: ${path.relative(process.cwd(), t.outDir)} (${t.fileCount} files)`);
+        }
+        console.log(`release manifest: ${path.relative(process.cwd(), result.releasePath)}`);
       }
-      console.log(`release manifest: ${path.relative(process.cwd(), result.releasePath)}`);
       return 0;
     }
     if (args.command === 'lint') {
