@@ -58,6 +58,35 @@ describe('build', () => {
     });
   });
 
+  it('merges a target mcp override field-by-field over the bundle-level server', () => {
+    const result = build({ targets: ['workbuddy'] }, (root) => {
+      const text = readFileSync(path.join(root, 'pack.yaml'), 'utf8');
+      writeFileSync(path.join(root, 'pack.yaml'), text.replace(
+        'command: extra-mcp',
+        "command: extra-mcp\n      demo:\n        args: ['./bin/demo-mcp.mjs', '--host', 'workbuddy']",
+      ));
+    });
+    const dir = result.targets[0].outDir;
+    // Fields the override does not set survive from the bundle-level server,
+    // including the envelope rendered from the presentation keys; servers
+    // without an override ship untouched.
+    expect(JSON.parse(readFileSync(path.join(dir, '.mcp.json'), 'utf8'))).toEqual({
+      mcpServers: {
+        demo: {
+          command: 'node',
+          args: ['./bin/demo-mcp.mjs', '--host', 'workbuddy'],
+          env: { DEMO_HOME: '.' },
+          'x-workbuddy': {
+            displayName: { en: 'Demo Tool', zh: '演示工具' },
+            description: { en: 'Demo MCP server', zh: '演示 MCP 服务' },
+            icon: './avatars/expert.png',
+          },
+        },
+        extra: { command: 'extra-mcp' },
+      },
+    });
+  });
+
   it('emits a codex portable core with a conformant root mcp.json', () => {
     const result = build({ targets: ['codex'] });
     const dir = result.targets[0].outDir;

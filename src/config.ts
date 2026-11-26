@@ -23,13 +23,16 @@ function assertStringArray(value: unknown, field: string): asserts value is stri
   }
 }
 
-function assertMcp(value: unknown, field: string): asserts value is Record<string, McpServer> {
+// Bundle-level servers are complete definitions; `partial` (target overrides)
+// may set any subset, merged field-by-field over the bundle-level server.
+function assertMcp(value: unknown, field: string, partial = false): void {
   if (!isRecord(value)) fail(`${field} must be a map of server name to stdio server definition`);
   for (const [name, server] of Object.entries(value)) {
     const where = `${field}.${name}`;
     if (!isRecord(server)) fail(`${where} must be an object`);
     const s = server as McpServer;
-    if (typeof s.command !== 'string' || !s.command) fail(`${where}: command is required`);
+    if (!partial && (typeof s.command !== 'string' || !s.command)) fail(`${where}: command is required`);
+    if (partial && Object.keys(server).length === 0) fail(`${where}: an override must set at least one field`);
     if (s.args !== undefined) assertStringArray(s.args, `${where}.args`);
     if (s.cwd !== undefined && typeof s.cwd !== 'string') fail(`${where}.cwd must be a string`);
     if (s.env !== undefined && (!isRecord(s.env) || Object.values(s.env).some((v) => typeof v !== 'string'))) {
@@ -94,7 +97,7 @@ export function loadConfig(configPath: string): PackConfig {
     if (typeof target.manifest !== 'string' || !target.manifest) {
       fail(`targets.${key}: manifest template path is required`);
     }
-    if (target.mcp !== undefined) assertMcp(target.mcp, `targets.${key}.mcp`);
+    if (target.mcp !== undefined) assertMcp(target.mcp, `targets.${key}.mcp`, true);
     if (target.display !== undefined) assertDisplay(target.display, `targets.${key}.display`);
     if (target.outDir !== undefined && path.isAbsolute(target.outDir)) {
       fail(`targets.${key}: outDir must be relative`);

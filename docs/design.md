@@ -79,7 +79,7 @@ corresponds to a commit/tag and is reproducible by construction.
 | `build[]` | Commands run in order in the bundle root; any non-zero exit fails the build. `install-dev` sets `HARNESS_PACK_DEV=1` so view scripts may assemble from working trees; releases never do |
 | `mcp{}` | stdio servers shared by all targets; `{{root}}` in any server string is rendered by the preset into that harness's plugin-root reference; `displayName`/`description`/`icon`/`auth` are canonical connector-card metadata, rendered into the envelope if the preset has one (workbuddy → `x-workbuddy`) and stripped otherwise |
 | `display{}` | Persona layer: persona platforms (which present the bundle as a person) render these keys via `{{display.*}}`; `name` is always the tool id (install directory, pin name, plugin/agentName) and is never a display fallback |
-| `targets{}` | Target name → `{preset, manifest, mcp?, display?, outDir?}`; `mcp` merges over the bundle-level declarations by server name; `display` overrides the persona layer **whole-key** (platform media differences, such as a market that only accepts PNG avatars: the key swaps files, it is not a deep merge) |
+| `targets{}` | Target name → `{preset, manifest, mcp?, display?, outDir?}`; `mcp` merges field-by-field over the bundle-level server of the same name; `display` overrides the persona layer **whole-key** (platform media differences, such as a market that only accepts PNG avatars: the key swaps files, it is not a deep merge) |
 
 **Manifest templates**: `{{name}}`/`{{version}}`/`{{display.*}}` (dotted
 paths) are substituted first, then the result is parsed as JSON; a parse

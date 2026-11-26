@@ -56,7 +56,7 @@ export interface TargetConfig {
   // {{display.*}} tokens are substituted, then the file is parsed as JSON and
   // written to the preset's manifest destination.
   manifest: string;
-  // Per-target MCP servers, merged by server name over the bundle-level mcp.
+  // Per-target MCP servers, field-merged over the bundle-level mcp.
   mcp?: Record<string, McpServer>;
   // Whole-key overrides over the canonical display layer.
   display?: Partial<DisplayConfig>;

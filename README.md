@@ -74,7 +74,7 @@ targets:
   claude:
     preset: claude-code
     manifest: templates/claude-plugin.json    # {{name}} / {{version}} tokens
-    mcp:                   # optional per-target servers, merged by name
+    mcp:                   # optional per-target servers, field-merged
       extra: { command: extra-mcp }
   workbuddy:
     preset: workbuddy
@@ -94,7 +94,8 @@ targets:
   consumers copy it verbatim. WorkBuddy's expert service resolves `./` args
   against the installed plugin dir; that is the channel the published expert
   package uses.
-  `targets.<name>.mcp` merges by server name over the bundle-level map.
+  `targets.<name>.mcp` merges field-by-field over the bundle-level server of
+  the same name: an override replaces only the fields it sets.
   Per-server presentation keys (`displayName` / `description` / `icon` /
   `auth`) are canonical: presets with a metadata envelope render them into it
   (workbuddy → `x-workbuddy`, the connector-card copy; the app strips the

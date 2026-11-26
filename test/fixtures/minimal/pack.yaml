@@ -53,6 +53,6 @@ targets:
     preset: workbuddy
     manifest: templates/workbuddy-plugin.json
     mcp:
-      # Per-target servers merge over the bundle-level ones by name.
+      # Per-target servers field-merge over the bundle-level ones by name.
       extra:
         command: extra-mcp

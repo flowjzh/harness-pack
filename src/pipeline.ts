@@ -167,7 +167,11 @@ function emitTarget(
     cpSync(entry.src, path.join(outDir, sub, entry.name), { recursive: true });
   }
 
-  const servers = { ...cfg.mcp, ...target.mcp };
+  // Field merge: an override replaces only the fields it sets.
+  const servers: Record<string, McpServer> = { ...cfg.mcp };
+  for (const [name, override] of Object.entries(target.mcp ?? {})) {
+    servers[name] = { ...servers[name], ...override };
+  }
   const mcp = Object.keys(servers).length > 0 ? renderMcpServers(servers, preset) : undefined;
 
   const manifest = renderManifest(root, target.manifest, cfg, preset, display, mcp);
