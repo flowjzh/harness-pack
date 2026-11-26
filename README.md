@@ -2,6 +2,8 @@
 
 One agent bundle in, per-harness release artifacts out.
 
+<img width="896" height="222" src="https://github.com/user-attachments/assets/de199dc5-1ff6-4f03-8820-16bd2d2a4900" />
+
 **Status:** WorkBuddy is the only supported target today. The `claude-code` and
 `codex` presets are experimental and not part of the supported surface.
 
